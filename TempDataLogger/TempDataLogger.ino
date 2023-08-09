@@ -19,7 +19,13 @@ ulong startTime;
 void setup() 
 {
   //Start the serial coms
-  Serial.begin(HWS_BAUD);
+  Serial.begin(9600);
+  pinMode(LED_BUILTIN, OUTPUT);
+  digitalWrite(LED_BUILTIN, HIGH);
+  //for testing, lets initialize our data
+  data.ambientTemp = 30.0;
+  data.TCoupleVolts = 120.2;
+  data.TCoupleTempC = -20.1;
   printHeader();
 }
 
@@ -34,4 +40,5 @@ void loop()
   }
   //print the data to the serial port
   printDataStruct(&data);
+  //Serial.println(millis());
 }
