@@ -38,7 +38,7 @@
 #endif
 
 #ifndef CycleTime
-#define CycleTime 60000 //1 minute
+#define CycleTime 120000 //1 minute (60000) moving to 2 minute(120000), whichs hould be 450 cycles over 15 hours
 #endif
 
 #define MISO 14 
