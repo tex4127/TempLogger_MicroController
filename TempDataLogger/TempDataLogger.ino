@@ -22,23 +22,26 @@ void setup()
   Serial.begin(9600);
   pinMode(LED_BUILTIN, OUTPUT);
   digitalWrite(LED_BUILTIN, HIGH);
-  //for testing, lets initialize our data
+  thermo.begin();
+  thermo.setThermocoupleType(MAX31856_TCTYPE_J);
   data.ambientTemp = 30.0;
-  data.TCoupleVolts = 120.2;
-  data.TCoupleTempC = -20.1;
   printHeader();
 }
 
 void loop() 
 {
   startTime = millis();
-  while (millis()- startTime < CycleTime)
+  while (millis() - startTime < CycleTime)
   {
     //measure the ambient temp
+    data.ambientTemp = getAmbientTemp();
     //measure the probe voltage and temp
+    data.TCoupleCJTempC = thermo.readCJTemperature();
+    data.TCoupleTempC = thermo.readThermocoupleTemperature();
     //rinse and repeat (we can add averaging here if we want to)
   }
   //print the data to the serial port
   printDataStruct(&data);
+  digitalWrite(LED_BUILTIN, !digitalRead(LED_BUILTIN));
   //Serial.println(millis());
 }

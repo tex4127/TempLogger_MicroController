@@ -8,6 +8,8 @@
 ///
 ///////////////////////////////////////////
 
+#include <Adafruit_MAX31856.h>
+
 #ifndef __UTIL_HH__
 #define __UTIL_HH__
 
@@ -36,19 +38,26 @@
 #endif
 
 #ifndef CycleTime
-#define CycleTime 1000
+#define CycleTime 3600000 //1 minute
 #endif
+
+#define MISO 14 
+#define MOSI 16
+#define SS 17
+#define SCK 15
+
+Adafruit_MAX31856 thermo = Adafruit_MAX31856(SS, MISO, MOSI, SCK);
 
 typedef struct TempData_t
 {
   float ambientTemp;
-  float TCoupleVolts;
+  float TCoupleCJTempC;
   float TCoupleTempC;
 } TempData_t;
 
 int printHeader(void)
 {
-  Serial.print("Time (millis), Ambient Temp (C), Probe Temp (Volts), Probe Temp (C) \n");
+  Serial.print("Time (millis), Ambient Temp (C), Probe Cold Junction Temp (C), Probe Temp (C) \n");
   return 1;
 }
 
@@ -58,7 +67,7 @@ int addArgToArray(char* buf, size_t &pos, char* arg, size_t len, bool addComma =
   if(len + pos >= buf_len)return 0;
   for(size_t i = 0; i < len; i++)
   {
-    buf[pos++] = arg[i];
+    buf[pos++] = arg[i]+48;
   }
   if(addComma)buf[pos++] = 0x2C;
   return 1;
@@ -68,7 +77,8 @@ int addArgToArray(char* buf, size_t &pos, float arg, bool addComma = true)
 {
   char arg_c[floatCharSize];
   //parameters: the float, the minimum width, the percision, and where to store the char array
-  dtostrf(arg, 6, 4, arg_c);
+  //dtostrf(arg, 6, 4, arg_c);
+  sprintf(arg_c, "%f", arg);
   //Add the float (as a char array) to the outbuffer
   addArgToArray(buf, pos, arg_c, sizeof(arg_c)/sizeof(arg_c[0]), addComma);
   return 1;
@@ -76,6 +86,7 @@ int addArgToArray(char* buf, size_t &pos, float arg, bool addComma = true)
 
 int printDataStruct(TempData_t* t)
 {
+  /*
   char outBuffer[OUTBUFFER_SIZE];
   size_t pos = 0;
   addArgToArray(outBuffer, pos, t->ambientTemp);
@@ -83,6 +94,8 @@ int printDataStruct(TempData_t* t)
   addArgToArray(outBuffer, pos, t->TCoupleTempC, false); //do not add the last comma
   outBuffer[pos++] = '\n'; //add the new line character so that excel knows to start a new row
   Serial.write(outBuffer, pos);
+  */
+  Serial.println(String(t->ambientTemp) + "," + String(t->TCoupleCJTempC) + "," + String(t->TCoupleTempC)); 
   return 1;
 }
 
@@ -91,11 +104,37 @@ int printDataStruct_f(TempData_t* t)
   char outBuffer[OUTBUFFER_SIZE];
   size_t pos = 0;
   addArgToArray(outBuffer, pos, t->ambientTemp);
-  addArgToArray(outBuffer, pos, t->TCoupleVolts);
+  addArgToArray(outBuffer, pos, t->TCoupleCJTempC);
   addArgToArray(outBuffer, pos, t->TCoupleTempC, false); //do not add the last comma
   outBuffer[pos++] = '\n'; //add the new line character so that excel knows to start a new row
   Serial.write(outBuffer, pos);
   return 1;
+}
+
+float getAmbientTemp()
+{
+  //pulled from here: 
+  //https://theorycircuit.com/arduino-internal-temperature-sensor/
+  uint wADC;
+  float _temp;
+  ADMUX = (_BV(REFS1) | _BV(REFS0) | _BV(MUX3));
+  ADCSRA |= _BV(ADEN);  // enable the ADC
+
+  delay(20);            // wait for voltages to become stable.
+
+  ADCSRA |= _BV(ADSC);  // Start the ADC
+
+  // Detect end-of-conversion
+  while (bit_is_set(ADCSRA,ADSC));
+
+  // Reading register "ADCW" takes care of how to read ADCL and ADCH.
+  wADC = ADCW;
+
+  // The offset of 324.31 could be wrong. It is just an indication.
+  _temp = (wADC);
+
+  // The returned temperature is in degrees Celcius.
+  return (_temp);
 }
 
 /*
