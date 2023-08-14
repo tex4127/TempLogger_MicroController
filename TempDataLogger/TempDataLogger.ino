@@ -23,7 +23,7 @@ void setup()
   pinMode(LED_BUILTIN, OUTPUT);
   digitalWrite(LED_BUILTIN, HIGH);
   thermo.begin();
-  thermo.setThermocoupleType(MAX31856_TCTYPE_J);
+  thermo.setThermocoupleType(MAX31856_TCTYPE_T);
   data.ambientTemp = 30.0;
   printHeader();
 }
